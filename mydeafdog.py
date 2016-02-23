@@ -9,7 +9,113 @@ from pylab import *
 
 import wave
 import struct
-import subprocess
+import subprocess   
+   
+   
+   # main function !!
+   
+def soundToImage(filename, resolution = 6):
+    sample, framerate = soundToSample(filename)
+    # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
+    
+    if framerate != 44100:
+        print('wrong framerate!')
+        return 0
+    
+    N = (2**resolution)**2
+    
+    chunk_num = len(sample) // N
+    
+    chunks = [sample[i*N:(i+1)*N] for i in range(chunk_num)]
+    
+    video = []
+    
+    for chunk in chunks:
+        video.append(freqToImage(fft(chunk)))
+    
+    return video
+
+
+    
+def freqToCoeff(freq):                                  # muss noch normiert werden !!!
+    
+    n = len(freq)
+    coeff = zeros(n)
+    
+    for k in range(1,(n//2)):
+        coeff[n//2-k] = float(1j*(freq[k]-freq[-k]))
+        coeff[n//2+k] = float(freq[k]+freq[-k])
+    coeff[n//2] = float(freq[0])
+    coeff[0] = float(freq[-(n//2)])
+    
+    return coeff
+    
+    
+    
+
+def coeffToPixel(coeff):
+    n = len(coeff)
+    
+    pixel = [k/(n*(2.**8))+128 for k in coeff]
+    
+    return pixel
+      
+ 
+
+
+def pixelToImage(pixel):
+    
+    l = int(sqrt(len(pixel)))
+    resolution = int(log2(l))
+    
+    XYtoIndex = [None]*l
+    indexToX  = [None]*(l**2)
+    indexToY  = [None]*(l**2)
+    
+    for x in range(l):
+        XYtoIndex[x] = [None]*l
+        for y in range(l):
+            i = pixelToIndex(x,y, resolution)
+            XYtoIndex[x][y] = i
+            indexToX[i] = x
+            indexToY[i] = y
+
+    n = size(pixel)
+    l = int(sqrt(n))
+    M = zeros([l,l])
+            
+    for x in range(l):
+        XYtoIndex[x] = [None]*l
+        for y in range(l):
+            i = pixelToIndex(x,y,resolution)
+            XYtoIndex[x][y] = i
+            indexToX[i] = x
+            indexToY[i] = y
+        
+    
+    for i in range(n):
+        M[[l-indexToY[i]-1],indexToX[i]] = pixel[i]    
+
+    return M
+    
+
+def freqToImage(freq):
+    
+    coeff = freqToCoeff(freq)
+    pixel = coeffToPixel(coeff)
+    image = pixelToImage(pixel)
+    
+    return image
+    
+    
+    
+def soundToImage(filename):                       # samples muss von der gestalt (2^n)^2 sein !!!
+
+    samples, framerate = soundToSample(filename)
+    freq = fft(samples)
+    image = freqToImage(freq)   
+    
+    return image
 
 
 
