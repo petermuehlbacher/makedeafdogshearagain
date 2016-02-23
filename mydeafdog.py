@@ -6,35 +6,25 @@ Created on Thu Feb 18 21:17:03 2016
 """
 from scipy import *
 from pylab import *
+from cmath import atanh
 
 import wave
 import struct
 import subprocess   
    
-   
-   # main function !!
-   
-def soundToImage(filename, resolution = 6):
-    sample, framerate = soundToSample(filename)
-    # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
-    
-    if framerate != 44100:
-        print('wrong framerate!')
-        return 0
-    
-    N = (2**resolution)**2
-    
-    chunk_num = len(sample) // N
-    
-    chunks = [sample[i*N:(i+1)*N] for i in range(chunk_num)]
-    
-    video = []
-    
-    for chunk in chunks:
-        video.append(freqToImage(fft(chunk)))
-    
-    return video
 
+
+def rescaling( x, c = 0.99, D = [-2**15,2**15-1], W = [0,255] ):      
+    
+    w = W[1]-W[0]                           # lengthe of range
+    d = D[1]-D[0]                           # length of domain
+    
+    T = 2 * atanh(2*c/w-1)                  # upper bound where 100*c % of the limit can theoretically be achieved
+    t = [(k-D[0])/d * 2*T - T for k in x]             # rescaling the domain, so it matches to [-T,T]
+    
+    y = [((exp(k)/(1+exp(k))) * w + W[0])/c for k in t]
+    
+    return y
 
     
 def freqToCoeff(freq):                                  # muss noch normiert werden !!!
@@ -43,10 +33,10 @@ def freqToCoeff(freq):                                  # muss noch normiert wer
     coeff = zeros(n)
     
     for k in range(1,(n//2)):
-        coeff[n//2-k] = float(1j*(freq[k]-freq[-k]))
-        coeff[n//2+k] = float(freq[k]+freq[-k])
-    coeff[n//2] = float(freq[0])
-    coeff[0] = float(freq[-(n//2)])
+        coeff[n//2-k] = real(1j*(freq[k]-freq[-k]))
+        coeff[n//2+k] = real(freq[k]+freq[-k])
+    coeff[n//2] = real(freq[0])
+    coeff[0] = real(freq[-(n//2)])
     
     return coeff
     
@@ -64,7 +54,7 @@ def coeffToPixel(coeff):
 
 
 def pixelToImage(pixel):
-    
+
     l = int(sqrt(len(pixel)))
     resolution = int(log2(l))
     
@@ -107,15 +97,8 @@ def freqToImage(freq):
     
     return image
     
-    
-    
-def soundToImage(filename):                       # samples muss von der gestalt (2^n)^2 sein !!!
 
-    samples, framerate = soundToSample(filename)
-    freq = fft(samples)
-    image = freqToImage(freq)   
-    
-    return image
+
 
 
 
@@ -211,3 +194,26 @@ def pixelToIndex(x,y,resolution):
             indexMatrix = np.fliplr(np.transpose(np.fliplr(indexMatrix)))
 
     return int(index,2)
+
+
+
+def soundToImage(filename, resolution = 6):
+    sample, framerate = soundToSample(filename)
+    # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
+    
+    if framerate != 44100:
+        print('wrong framerate!')
+        return 0
+    
+    N = (2**resolution)**2
+    
+    chunk_num = len(sample) // N
+    
+    chunks = [sample[i*N:(i+1)*N] for i in range(chunk_num)]
+    
+    video = []
+    
+    for chunk in chunks:
+        video.append(freqToImage(fft(chunk)))
+    
+    return video
