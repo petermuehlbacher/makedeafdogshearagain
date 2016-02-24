@@ -14,17 +14,18 @@ import subprocess
    
 
 
-def rescaling( x, c = 0.99, D = [-2**15,2**15-1], W = [0,255] ):      
+def rescaling( x, n , c = 0.9999999999, W = [0,255] ):      
     
+    D = [-n*2**15,n*2**15]
     w = W[1]-W[0]                           # lengthe of range
     d = D[1]-D[0]                           # length of domain
     
-    T = 2 * atanh(2*c/w-1)                  # upper bound where 100*c % of the limit can theoretically be achieved
-    t = [(k-D[0])/d * 2*T - T for k in x]             # rescaling the domain, so it matches to [-T,T]
+    T = 2 * atanh(2*c-1)                  # upper bound where 100*c % of the limit can theoretically be achieved
+    t = (x-D[0])/d * 2*T - T              # rescaling the domain, so it matches to [-T,T]
     
-    y = [((exp(k)/(1+exp(k))) * w + W[0])/c for k in t]
+    y = ((exp(t)/(1+exp(t))) * w + W[0])/c
     
-    return y
+    return real(y)
 
     
 def freqToCoeff(freq):                                  # muss noch normiert werden !!!
@@ -92,7 +93,7 @@ def pixelToImage(pixel):
 def freqToImage(freq):
     
     coeff = freqToCoeff(freq)
-    pixel = coeffToPixel(coeff)
+    pixel = rescaling(coeff, len(coeff))
     image = pixelToImage(pixel)
     
     return image
@@ -202,12 +203,19 @@ def soundToImage(filename, resolution = 6):
     # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
     
     if framerate != 44100:
-        print('wrong framerate!')
+        print('wrong framerate! {0}'.format(framerate))
         return 0
     
     N = (2**resolution)**2
-    
     chunk_num = len(sample) // N
+    
+    
+    folder = filename[:-4] + '/'
+    name = folder + filename    
+    
+    sampleToSound(sample[0:chunk_num*N], framerate, name)
+    
+    
     
     chunks = [sample[i*N:(i+1)*N] for i in range(chunk_num)]
     
