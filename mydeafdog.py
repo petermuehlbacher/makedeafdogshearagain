@@ -44,12 +44,12 @@ def freqToCoeff(freq):                                  # muss noch normiert wer
     
     
 
-def coeffToPixel(coeff):
-    n = len(coeff)
-    
-    pixel = [k/(n*(2.**8))+128 for k in coeff]
-    
-    return pixel
+#def coeffToPixel(coeff):
+#    n = len(coeff)
+#    
+#    pixel = [k/(n*(2.**8))+128 for k in coeff]
+#    
+#    return pixel
       
  
 
@@ -58,35 +58,12 @@ def pixelToImage(pixel):
 
     l = int(sqrt(len(pixel)))
     resolution = int(log2(l))
-    
-    XYtoIndex = [None]*l
-    indexToX  = [None]*(l**2)
-    indexToY  = [None]*(l**2)
-    
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
-            i = pixelToIndex(x,y, resolution)
-            XYtoIndex[x][y] = i
-            indexToX[i] = x
-            indexToY[i] = y
-
-    n = size(pixel)
-    l = int(sqrt(n))
     M = zeros([l,l])
-            
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
-            i = pixelToIndex(x,y,resolution)
-            XYtoIndex[x][y] = i
-            indexToX[i] = x
-            indexToY[i] = y
-        
     
-    for i in range(n):
-        M[[l-indexToY[i]-1],indexToX[i]] = pixel[i]    
-
+    for x in xrange(l):
+        for y in xrange(l):
+            M[x,l-y-1] = pixel[pixelToIndex(x,y, resolution)]
+    
     return M
     
 
@@ -202,9 +179,11 @@ def soundToImage(filename, resolution = 6):
     sample, framerate = soundToSample(filename)
     # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
     
-    if framerate != 44100:
-        print('wrong framerate! {0}'.format(framerate))
-        return 0
+    try:
+        framerate == 44100
+    except:
+        print 'At the moment only framerates of 44100 are supported!'
+        raise
     
     N = (2**resolution)**2
     chunk_num = len(sample) // N
