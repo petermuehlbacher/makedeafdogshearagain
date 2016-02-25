@@ -54,36 +54,21 @@ def coeffToPixel(coeff):
 
 
 def pixelToImage(pixel):
-
-    l = int(sqrt(len(pixel)))
-    resolution = int(log2(l))
-    
-    XYtoIndex = [None]*l
-    indexToX  = [None]*(l**2)
-    indexToY  = [None]*(l**2)
-    
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
-            i = pixelToIndex(x,y, resolution)
-            XYtoIndex[x][y] = i
-            indexToX[i] = x
-            indexToY[i] = y
-
     n = size(pixel)
     l = int(sqrt(n))
     M = zeros([l,l])
+    
+    indexToX  = [None for i in xrange(l**2)]
+    indexToY  = [None for i in xrange(l**2)]
             
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
+    for x in xrange(l):
+        for y in xrange(l):
             i = pixelToIndex(x,y,resolution)
-            XYtoIndex[x][y] = i
             indexToX[i] = x
             indexToY[i] = y
         
     
-    for i in range(n):
+    for i in xrange(n):
         M[[l-indexToY[i]-1],indexToX[i]] = pixel[i]    
 
     return M
