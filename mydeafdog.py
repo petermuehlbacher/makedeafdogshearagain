@@ -10,10 +10,10 @@ from cmath import atanh
 
 import wave
 import struct
-import subprocess   
-   
+import subprocess
 
 
+<<<<<<< HEAD
 def rescaling( x, n , c = 0.9999999999, W = [0,255] ):      
     
     D = [-n*2**15,n*2**15]
@@ -26,78 +26,78 @@ def rescaling( x, n , c = 0.9999999999, W = [0,255] ):
     y = ((exp(t)/(1+exp(t))) * w + W[0])/c
     
     return real(y)
+=======
 
-    
+def rescaling( x, c = 0.99, D = [-2**15,2**15-1], W = [0,255] ):
+
+    w = W[1]-W[0]                           # lengthe of range
+    d = D[1]-D[0]                           # length of domain
+
+    T = 2 * atanh(2*c/w-1)                  # upper bound where 100*c % of the limit can theoretically be achieved
+    t = [(k-D[0])/d * 2*T - T for k in x]             # rescaling the domain, so it matches to [-T,T]
+
+    y = [((exp(k)/(1+exp(k))) * w + W[0])/c for k in t]
+
+    return y
+>>>>>>> origin/master
+
+
 def freqToCoeff(freq):                                  # muss noch normiert werden !!!
-    
+
     n = len(freq)
     coeff = zeros(n)
-    
+
     for k in range(1,(n//2)):
         coeff[n//2-k] = real(1j*(freq[k]-freq[-k]))
         coeff[n//2+k] = real(freq[k]+freq[-k])
     coeff[n//2] = real(freq[0])
     coeff[0] = real(freq[-(n//2)])
-    
+
     return coeff
-    
-    
-    
+
+
+
 
 def coeffToPixel(coeff):
     n = len(coeff)
-    
+
     pixel = [k/(n*(2.**8))+128 for k in coeff]
-    
+
     return pixel
-      
- 
+
+
 
 
 def pixelToImage(pixel):
-
-    l = int(sqrt(len(pixel)))
-    resolution = int(log2(l))
-    
-    XYtoIndex = [None]*l
-    indexToX  = [None]*(l**2)
-    indexToY  = [None]*(l**2)
-    
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
-            i = pixelToIndex(x,y, resolution)
-            XYtoIndex[x][y] = i
-            indexToX[i] = x
-            indexToY[i] = y
-
     n = size(pixel)
     l = int(sqrt(n))
     M = zeros([l,l])
-            
-    for x in range(l):
-        XYtoIndex[x] = [None]*l
-        for y in range(l):
+    resolution = int(log2(l))
+
+    indexToX  = [None for i in xrange(l**2)]
+    indexToY  = [None for i in xrange(l**2)]
+
+    for x in xrange(l):
+        for y in xrange(l):
             i = pixelToIndex(x,y,resolution)
-            XYtoIndex[x][y] = i
             indexToX[i] = x
             indexToY[i] = y
-        
-    
-    for i in range(n):
-        M[[l-indexToY[i]-1],indexToX[i]] = pixel[i]    
+
+
+    for i in xrange(n):
+        M[[l-indexToY[i]-1],indexToX[i]] = pixel[i]
 
     return M
-    
+
 
 def freqToImage(freq):
-    
+
     coeff = freqToCoeff(freq)
     pixel = rescaling(coeff, len(coeff))
     image = pixelToImage(pixel)
-    
+
     return image
-    
+
 
 
 
@@ -201,12 +201,13 @@ def pixelToIndex(x,y,resolution):
 def soundToImage(filename, resolution = 6):
     sample, framerate = soundToSample(filename)
     # resolution=6 yields chunks of ~1/10 seconds length with the framerate of 44100
-    
+
     if framerate != 44100:
         print('wrong framerate! {0}'.format(framerate))
         return 0
-    
+
     N = (2**resolution)**2
+<<<<<<< HEAD
     chunk_num = len(sample) // N
     
     
@@ -217,11 +218,16 @@ def soundToImage(filename, resolution = 6):
     
     
     
+=======
+
+    chunk_num = len(sample) // N
+
+>>>>>>> origin/master
     chunks = [sample[i*N:(i+1)*N] for i in range(chunk_num)]
-    
+
     video = []
-    
+
     for chunk in chunks:
         video.append(freqToImage(fft(chunk)))
-    
+
     return video

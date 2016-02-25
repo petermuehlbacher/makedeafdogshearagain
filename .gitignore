@@ -111,3 +111,5 @@ sympy-plots-for-*.tex/
 sources
 .ipynb_checkpoints
 .idea
+.pyc
+/video
